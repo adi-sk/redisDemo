@@ -27,29 +27,25 @@ public class DemoController {
         return " done ! ";
     }
 
-    @RequestMapping(value="/addUser", method = RequestMethod.GET, produces = "text/plain")
-    public String addUser() {
+    @RequestMapping(value="/addUser", method = RequestMethod.POST)
+    public String addUser(@RequestBody User user) {
         Jedis jedis = new Jedis("localhost");
         System.out.println("Connection to server successful !");
         System.out.println("DONE : " + jedis.ping());
 
         jedis.select(5);
 
-        String userId = "1002";
-        String name = "Ram";
-        String followers = "1200";
-        String emailId = "ramkrhd@gmail2.com";
-
-        User user = new User(userId,name,Long.parseLong(followers),emailId);
-        if(user.getFollowers() > 1000){
-            Map<String,String> userMap = getUserMap(userId,name,followers,emailId);
-            jedis.hmset("user:" + userId , userMap);
-        }
         try {
             userDao.addUser(user);
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        if(user.getFollowers() > 1000){
+            Map<String,String> userMap = getUserMap(user.getUserId(),user.getName(),user.getFollowers()+"",user.getEmailId());
+            jedis.hmset("user:" + user.getUserId() , userMap);
+        }
+
         return " done ! ";
     }
 
