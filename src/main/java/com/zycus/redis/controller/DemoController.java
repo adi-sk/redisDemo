@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.Jedis;
 
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,22 +19,57 @@ public class DemoController {
     @RequestMapping(value="/hello", method = RequestMethod.GET, produces = "text/plain")
     public String hello() {
         Jedis jedis = new Jedis("localhost");
+
         System.out.println("Connection to server successful !");
         System.out.println("DONE : " + jedis.ping());
 
         testString(jedis);
 
+        testList(jedis);
+
         testHash(jedis);
+
+        testSet(jedis);
+
+        testSortedSet(jedis);
+
+        demoSortedSetMessageDataIngest(jedis);
         return " done ! ";
+    }
+
+    private void demoSortedSetMessageDataIngest(Jedis jedis) {
+
+        System.out.println("Adding data to sorted set");
+        jedis.zadd("timeSeries", new Date().getTime(),"hi");
+        jedis.zadd("timeSeries",new Date().getTime(),"how are you");
+        jedis.zadd("timeSeries",new Date().getTime(),"what's up");
+
+    }
+
+    private void testSortedSet(Jedis jedis) {
+        jedis.zadd("demoSorted",2,"6781");
+        jedis.zadd("demoSorted",1,"6782");
+
+    }
+
+    private void testSet(Jedis jedis) {
+        jedis.select(1);
+        jedis.sadd("name1","aditya","adi","aditya");
+    }
+
+    private void testList(Jedis jedis) {
+
+        jedis.rpush("name1","raj");
+        jedis.rpush("name1","rahul");
     }
 
     @RequestMapping(value="/addUser", method = RequestMethod.POST)
     public String addUser(@RequestBody User user) {
-        Jedis jedis = new Jedis("localhost");
+        Jedis jedis = new Jedis("192.168.4.185",6379);
         System.out.println("Connection to server successful !");
         System.out.println("DONE : " + jedis.ping());
 
-        jedis.select(5);
+        jedis.select(4);
 
         try {
             userDao.addUser(user);
@@ -69,11 +105,11 @@ public class DemoController {
 
     @RequestMapping(value="/getUser", method = RequestMethod.GET, produces = "application/json")
     public User getUser(@RequestParam("userId") String userId) {
-        Jedis jedis = new Jedis("localhost");
+        Jedis jedis = new Jedis("192.168.4.185",6379);
         System.out.println("Connection to server successful !");
         System.out.println("DONE : " + jedis.ping());
 
-        jedis.select(5);
+        jedis.select(4);
         User user = new User();
         String key = "user:" +userId;
         if(jedis.hexists(key ,"userId")){
